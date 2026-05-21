@@ -12,6 +12,8 @@ export type WorkbenchTask = {
   detail: string;
 };
 
+export type CadDocumentKind = "assembly" | "part";
+
 export type TaskResult = {
   id: string;
   status: "done";
@@ -33,8 +35,15 @@ export type ExportResult = {
   filePath?: string;
 };
 
+export type WsServerState = {
+  port: number;
+  url: string;
+};
+
 export type DesktopApi = {
   getVersion: () => Promise<string>;
+  reloadWindow: () => Promise<void>;
+  getWsServer: () => Promise<WsServerState>;
   runTask: (task: WorkbenchTask) => Promise<TaskResult>;
   exportModel: (snapshot: ModelSnapshot) => Promise<ExportResult>;
   onTelemetry: (callback: (payload: TelemetryPayload) => void) => () => void;

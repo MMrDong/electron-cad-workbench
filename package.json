@@ -4,7 +4,7 @@
   "description": "Electron CAD desktop workbench demo built with TypeScript, Vite, and Tailwind CSS.",
   "main": "dist-electron/electron/main.js",
   "scripts": {
-    "dev": "concurrently -k \"vite --host 127.0.0.1\" \"wait-on http://127.0.0.1:5173 && tsc -p tsconfig.electron.json && electron .\"",
+    "dev": "concurrently -k \"vite --host 127.0.0.1\" \"wait-on http://127.0.0.1:5173 && tsc -p tsconfig.electron.json && set ELECTRON_RUN_AS_NODE=&& electron .\"",
     "build": "tsc -p tsconfig.electron.json && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.electron.json --noEmit"
@@ -18,8 +18,19 @@
   ],
   "author": "Declan Li",
   "license": "MIT",
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "^0.184.0",
+    "ws": "^8.20.1"
+  },
   "devDependencies": {
     "@types/node": "^20.14.15",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@types/three": "^0.184.1",
+    "@types/ws": "^8.18.1",
+    "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.20",
     "concurrently": "^8.2.2",
     "electron": "^31.7.7",

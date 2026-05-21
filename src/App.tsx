@@ -8,6 +8,7 @@ import { useCadWebSocket } from "./renderer/hooks/useCadWebSocket";
 import { useCadTabs } from "./renderer/hooks/useCadTabs";
 import { useTelemetry } from "./renderer/hooks/useTelemetry";
 import { useToast } from "./renderer/hooks/useToast";
+import { useWasmLod } from "./renderer/hooks/useWasmLod";
 import { RecentView } from "./renderer/pages/RecentView";
 import { WorkbenchView } from "./renderer/pages/WorkbenchView";
 import type { WorkspaceView } from "./renderer/types";
@@ -16,6 +17,7 @@ import type { CadDocumentKind } from "./types";
 export function App() {
   const [activeView, setActiveView] = useState<WorkspaceView>("welcome");
   const telemetry = useTelemetry();
+  const wasmLod = useWasmLod();
   const { requestBinaryModel, state: wsState } = useCadWebSocket();
   const { toast, setToast } = useToast();
   const {
@@ -42,6 +44,12 @@ export function App() {
       { label: "WASM Load", value: telemetry.wasmLoad ? `${telemetry.wasmLoad}%` : "--" }
     ],
     [telemetry]
+  );
+
+  const lodLevel = activeTab ? wasmLod.selectLod(10 / activeTab.view.zoom, wsState.binaryParts.length) : 0;
+  const renderBinaryParts = useMemo(
+    () => wasmLod.layoutParts(wsState.binaryParts, lodLevel),
+    [lodLevel, wasmLod, wsState.binaryParts]
   );
 
   useEffect(() => {
@@ -82,6 +90,9 @@ export function App() {
       return (
         <WorkbenchView
           activeTab={activeTab}
+          binaryParts={renderBinaryParts}
+          lodLevel={lodLevel}
+          lodReady={wasmLod.ready}
           metrics={metrics}
           onAddAssemblyPart={() => {
             addAssemblyPart();

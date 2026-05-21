@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 import type { CadBinaryPart, CadDocumentKind } from "../types";
+import type { LodLevel } from "../renderer/hooks/useWasmLod";
 
 type ViewState = {
   zoom: number;
@@ -15,6 +16,7 @@ type CadViewportProps = {
   binaryParts?: CadBinaryPart[];
   children?: ReactNode;
   documentKind: CadDocumentKind;
+  lodLevel: LodLevel;
   partCount: number;
   view: ViewState;
   onViewChange: (view: ViewState | ((current: ViewState) => ViewState)) => void;
@@ -36,7 +38,7 @@ type CadPart = {
   scale: [number, number, number];
 };
 
-export function CadViewport({ binaryParts = [], children, documentKind, partCount, view, onViewChange }: CadViewportProps) {
+export function CadViewport({ binaryParts = [], children, documentKind, lodLevel, partCount, view, onViewChange }: CadViewportProps) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const onViewChangeRef = useRef(onViewChange);
   const runtimeRef = useRef<ThreeRuntime | null>(null);
@@ -160,9 +162,9 @@ export function CadViewport({ binaryParts = [], children, documentKind, partCoun
     }
 
     if (binaryParts.length > 0) {
-      runtime.scene.add(buildBinaryPayload(binaryParts));
+      runtime.scene.add(buildBinaryPayload(binaryParts, lodLevel));
     }
-  }, [binaryParts]);
+  }, [binaryParts, lodLevel]);
 
   function setZoom(nextZoom: number) {
     onViewChange((current) => ({
@@ -308,7 +310,7 @@ function buildAxisMarkers(scene: THREE.Scene) {
   scene.add(axes);
 }
 
-function buildBinaryPayload(parts: CadBinaryPart[]) {
+function buildBinaryPayload(parts: CadBinaryPart[], lodLevel: LodLevel) {
   const group = new THREE.Group();
   group.name = "BinaryPayload";
 
@@ -326,14 +328,16 @@ function buildBinaryPayload(parts: CadBinaryPart[]) {
     mesh.name = `BinaryPart-${index + 1}`;
     mesh.position.set(...part.position);
     mesh.scale.set(...part.scale);
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
+    mesh.castShadow = lodLevel === 0;
+    mesh.receiveShadow = lodLevel !== 2;
 
-    const edges = new THREE.LineSegments(
-      new THREE.EdgesGeometry(mesh.geometry, 24),
-      new THREE.LineBasicMaterial({ color: "#ffffff", transparent: true, opacity: 0.72 })
-    );
-    mesh.add(edges);
+    if (lodLevel !== 2) {
+      const edges = new THREE.LineSegments(
+        new THREE.EdgesGeometry(mesh.geometry, lodLevel === 0 ? 24 : 45),
+        new THREE.LineBasicMaterial({ color: "#ffffff", transparent: true, opacity: lodLevel === 0 ? 0.72 : 0.38 })
+      );
+      mesh.add(edges);
+    }
     group.add(mesh);
   });
 

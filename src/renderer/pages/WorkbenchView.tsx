@@ -1,9 +1,14 @@
 import { CadViewport } from "../../components/CadViewport";
+import type { CadBinaryPart } from "../../types";
 import type { CadWsState } from "../hooks/useCadWebSocket";
+import type { LodLevel } from "../hooks/useWasmLod";
 import type { CadTab, ViewState } from "../types";
 
 type WorkbenchViewProps = {
   activeTab: CadTab;
+  binaryParts: CadBinaryPart[];
+  lodLevel: LodLevel;
+  lodReady: boolean;
   metrics: Array<{ label: string; value: string | number }>;
   onAddAssemblyPart: () => void;
   onRequestBinaryModel: () => void;
@@ -14,6 +19,9 @@ type WorkbenchViewProps = {
 
 export function WorkbenchView({
   activeTab,
+  binaryParts,
+  lodLevel,
+  lodReady,
   metrics,
   onAddAssemblyPart,
   onRequestBinaryModel,
@@ -25,8 +33,9 @@ export function WorkbenchView({
 
   return (
     <CadViewport
-      binaryParts={wsState.binaryParts}
+      binaryParts={binaryParts}
       documentKind={activeTab.kind}
+      lodLevel={lodLevel}
       onViewChange={onUpdateView}
       partCount={activeTab.partCount}
       view={activeTab.view}
@@ -97,6 +106,8 @@ export function WorkbenchView({
           <span>batches: {wsState.binaryRecords.length}</span>
           <span>parts: {wsState.binaryParts.length}</span>
           <span>last: {wsState.lastBinaryAt}</span>
+          <span>lod: {getLodLabel(lodLevel)} {lodReady ? "wasm" : "js"}</span>
+          <span>render: wasm layout + three mesh</span>
         </div>
       </div>
 
@@ -107,6 +118,18 @@ export function WorkbenchView({
       </div>
     </CadViewport>
   );
+}
+
+function getLodLabel(level: LodLevel) {
+  if (level === 0) {
+    return "high";
+  }
+
+  if (level === 1) {
+    return "mid";
+  }
+
+  return "low";
 }
 
 function StructureOverlay({ activeTab }: { activeTab: CadTab }) {

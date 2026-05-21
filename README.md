@@ -38,8 +38,15 @@ WS:   ws://127.0.0.1:49321
 npm run dev        # 启动 Vite + Electron
 npm run build      # 构建 Electron 主进程/preload 和 Vite 渲染进程
 npm run typecheck  # 检查渲染进程和 Electron 代码类型
+npm run wasm:lod   # 将 src/wasm/lod.wat 编译成 public/wasm/lod.wasm
 npm run preview    # 预览 Vite 生产构建
 ```
+
+## WASM LOD
+
+项目内置了一个 WebAssembly LOD 示例，用于根据相机距离和零件数量计算细节等级，并批量处理 Three.js 渲染用的零件位置和缩放数据。
+
+详细开发流程见：[WASM LOD 开发与使用说明](docs/wasm-lod.md)。
 
 ## 目录结构
 
@@ -60,8 +67,17 @@ src/
     events/            渲染进程内部事件中心
     hooks/             tabs、telemetry、toast、WebSocket 等逻辑
     pages/             工作台和最近文档视图
+  wasm/
+    lod.wat            WASM LOD 源码
   styles.css           Tailwind CSS 入口
   types.ts             preload 和 renderer 共享类型
+
+public/
+  wasm/
+    lod.wasm           由 npm run wasm:lod 生成的 WASM 文件
+
+scripts/
+  build-lod-wasm.mjs   WAT 到 WASM 的构建脚本
 ```
 
 ## 渲染进程设计

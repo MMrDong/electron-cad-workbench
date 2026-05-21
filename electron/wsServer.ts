@@ -21,15 +21,6 @@ type CadWsMessage =
       };
     }
   | {
-      type: "cad:scene-tick";
-      payload: {
-        clients: number;
-        constraints: number;
-        revision: number;
-        timestamp: string;
-      };
-    }
-  | {
       type: "cad:client-command";
       payload: unknown;
     };
@@ -37,8 +28,6 @@ type CadWsMessage =
 const WS_PORT = 49321;
 
 let server: WebSocketServer | undefined;
-let tickTimer: NodeJS.Timeout | undefined;
-let revision = 1;
 
 /**
  * 启动本地 WebSocket 服务。
@@ -67,26 +56,18 @@ export function startWsServer(): WsServerState {
 
     // 当前 demo 会把客户端命令广播出去，模拟多端协同/命令回放通道。
     socket.on("message", (raw) => {
+      const message = parseMessage(raw.toString());
+      if (isRequestBinaryModel(message)) {
+        sendBinaryModel(socket);
+        return;
+      }
+
       broadcast({
         type: "cad:client-command",
-        payload: parseMessage(raw.toString())
+        payload: message
       });
     });
   });
-
-  // 模拟 CAD 服务端状态推送：revision 类似模型版本号，constraints 类似约束求解数量。
-  tickTimer = setInterval(() => {
-    revision += 1;
-    broadcast({
-      type: "cad:scene-tick",
-      payload: {
-        clients: getClientCount(),
-        constraints: 12 + (revision % 6),
-        revision,
-        timestamp: new Date().toLocaleTimeString()
-      }
-    });
-  }, 1500);
 
   return getWsServerState();
 }
@@ -96,11 +77,6 @@ export function startWsServer(): WsServerState {
  * Electron 退出前调用，避免端口占用残留。
  */
 export function stopWsServer() {
-  if (tickTimer) {
-    clearInterval(tickTimer);
-    tickTimer = undefined;
-  }
-
   server?.clients.forEach((client) => client.close());
   server?.close();
   server = undefined;
@@ -139,4 +115,49 @@ function parseMessage(raw: string) {
   } catch {
     return raw;
   }
+}
+
+function isRequestBinaryModel(message: unknown): message is { type: "cad:request-binary-model" } {
+  return Boolean(message && typeof message === "object" && "type" in message && message.type === "cad:request-binary-model");
+}
+
+/**
+ * 用二进制 Float32Array 模拟 CAD 内核返回的轻量模型数据。
+ *
+ * 每个零件占 9 个 float：
+ * position(x, y, z), scale(x, y, z), color(r, g, b)
+ */
+function sendBinaryModel(socket: WebSocket) {
+  const partCount = randomInt(4, 8);
+  const values: number[] = [];
+
+  for (let index = 0; index < partCount; index += 1) {
+    const angle = Math.random() * Math.PI * 2;
+    const radius = randomFloat(2.2, 5.2);
+    const height = randomFloat(0.45, 2.4);
+
+    values.push(
+      Math.cos(angle) * radius,
+      height,
+      Math.sin(angle) * radius,
+      randomFloat(0.65, 1.85),
+      randomFloat(0.45, 1.55),
+      randomFloat(0.65, 1.85),
+      randomFloat(0.25, 0.98),
+      randomFloat(0.35, 0.98),
+      randomFloat(0.35, 0.98)
+    );
+  }
+
+  const parts = new Float32Array(values);
+
+  socket.send(Buffer.from(parts.buffer));
+}
+
+function randomFloat(min: number, max: number) {
+  return Number((Math.random() * (max - min) + min).toFixed(3));
+}
+
+function randomInt(min: number, max: number) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }

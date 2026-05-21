@@ -90,7 +90,7 @@ ws://127.0.0.1:49321
 当前 WS 消息包括：
 
 - `cad:hello`：客户端连接成功后的握手消息
-- `cad:scene-tick`：服务端定时推送的 CAD 场景状态
+- `cad:request-binary-model`：渲染进程请求二进制模型数据
 - `cad:client-command`：渲染进程发送命令后的广播消息
 
 控制台中可以通过 `[CAD WS]` 前缀查看连接日志。

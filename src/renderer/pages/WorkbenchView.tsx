@@ -6,6 +6,7 @@ type WorkbenchViewProps = {
   activeTab: CadTab;
   metrics: Array<{ label: string; value: string | number }>;
   onAddAssemblyPart: () => void;
+  onRequestBinaryModel: () => void;
   onUpdateView: (view: ViewState | ((current: ViewState) => ViewState)) => void;
   onZoom: (delta: number) => void;
   wsState: CadWsState;
@@ -15,6 +16,7 @@ export function WorkbenchView({
   activeTab,
   metrics,
   onAddAssemblyPart,
+  onRequestBinaryModel,
   onUpdateView,
   onZoom,
   wsState
@@ -22,7 +24,13 @@ export function WorkbenchView({
   const sceneMetrics = metrics.filter((metric) => metric.label === "FPS" || metric.label === "Latency");
 
   return (
-    <CadViewport documentKind={activeTab.kind} onViewChange={onUpdateView} partCount={activeTab.partCount} view={activeTab.view}>
+    <CadViewport
+      binaryParts={wsState.binaryParts}
+      documentKind={activeTab.kind}
+      onViewChange={onUpdateView}
+      partCount={activeTab.partCount}
+      view={activeTab.view}
+    >
       <div className="absolute left-5 top-5 max-w-[360px] border border-slate-700/80 bg-[#101418]/80 px-4 py-3 shadow-2xl backdrop-blur">
         <span className="block text-xs font-bold uppercase text-emerald-300">
           {activeTab.kind === "assembly" ? "Assembly Design" : "Part Modeling"}
@@ -45,6 +53,13 @@ export function WorkbenchView({
             添加零件
           </button>
         ) : null}
+        <button
+          className="h-10 border border-emerald-400/60 bg-emerald-400/95 px-4 text-sm font-bold text-emerald-950 shadow-xl backdrop-blur"
+          onClick={onRequestBinaryModel}
+          type="button"
+        >
+          加载二进制模型
+        </button>
         <button
           className="h-10 w-10 border border-slate-700 bg-[#101418]/85 text-xl text-slate-100 shadow-xl backdrop-blur"
           onClick={() => onZoom(-0.12)}
@@ -79,8 +94,9 @@ export function WorkbenchView({
         </div>
         <div className="mt-2 grid gap-1 text-slate-400">
           <span>clients: {wsState.clients}</span>
-          <span>rev: {wsState.revision}</span>
-          <span>constraints: {wsState.constraints}</span>
+          <span>batches: {wsState.binaryRecords.length}</span>
+          <span>parts: {wsState.binaryParts.length}</span>
+          <span>last: {wsState.lastBinaryAt}</span>
         </div>
       </div>
 

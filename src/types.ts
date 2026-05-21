@@ -14,6 +14,18 @@ export type WorkbenchTask = {
 
 export type CadDocumentKind = "assembly" | "part";
 
+export type CadBinaryPart = {
+  color: [number, number, number];
+  position: [number, number, number];
+  scale: [number, number, number];
+};
+
+export type CadBinaryRecord = {
+  id: string;
+  parts: CadBinaryPart[];
+  receivedAt: string;
+};
+
 export type TaskResult = {
   id: string;
   status: "done";

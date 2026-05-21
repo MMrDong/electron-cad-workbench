@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
-import type { CadDocumentKind } from "../types";
+import type { CadBinaryPart, CadDocumentKind } from "../types";
 
 type ViewState = {
   zoom: number;
@@ -12,6 +12,7 @@ type ViewState = {
 };
 
 type CadViewportProps = {
+  binaryParts?: CadBinaryPart[];
   children?: ReactNode;
   documentKind: CadDocumentKind;
   partCount: number;
@@ -35,7 +36,7 @@ type CadPart = {
   scale: [number, number, number];
 };
 
-export function CadViewport({ children, documentKind, partCount, view, onViewChange }: CadViewportProps) {
+export function CadViewport({ binaryParts = [], children, documentKind, partCount, view, onViewChange }: CadViewportProps) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const onViewChangeRef = useRef(onViewChange);
   const runtimeRef = useRef<ThreeRuntime | null>(null);
@@ -124,12 +125,7 @@ export function CadViewport({ children, documentKind, partCount, view, onViewCha
       resizeObserver.disconnect();
       window.cancelAnimationFrame(runtimeRef.current?.frameId ?? 0);
       controls.dispose();
-      scene.traverse((object) => {
-        if (object instanceof THREE.Mesh) {
-          object.geometry.dispose();
-          disposeMaterial(object.material);
-        }
-      });
+      disposeObject(scene);
       renderer.forceContextLoss();
       renderer.dispose();
       renderer.domElement.remove();
@@ -150,6 +146,23 @@ export function CadViewport({ children, documentKind, partCount, view, onViewCha
     runtime.camera.lookAt(runtime.controls.target);
     runtime.controls.update();
   }, [view.zoom, view.rotation, view.pitch]);
+
+  useEffect(() => {
+    const runtime = runtimeRef.current;
+    if (!runtime) {
+      return;
+    }
+
+    const previous = runtime.scene.getObjectByName("BinaryPayload");
+    if (previous) {
+      disposeObject(previous);
+      runtime.scene.remove(previous);
+    }
+
+    if (binaryParts.length > 0) {
+      runtime.scene.add(buildBinaryPayload(binaryParts));
+    }
+  }, [binaryParts]);
 
   function setZoom(nextZoom: number) {
     onViewChange((current) => ({
@@ -295,6 +308,38 @@ function buildAxisMarkers(scene: THREE.Scene) {
   scene.add(axes);
 }
 
+function buildBinaryPayload(parts: CadBinaryPart[]) {
+  const group = new THREE.Group();
+  group.name = "BinaryPayload";
+
+  parts.forEach((part, index) => {
+    const color = new THREE.Color(part.color[0], part.color[1], part.color[2]);
+    const mesh = new THREE.Mesh(
+      new THREE.BoxGeometry(1, 1, 1),
+      new THREE.MeshStandardMaterial({
+        color,
+        emissive: color.clone().multiplyScalar(0.12),
+        metalness: 0.32,
+        roughness: 0.38
+      })
+    );
+    mesh.name = `BinaryPart-${index + 1}`;
+    mesh.position.set(...part.position);
+    mesh.scale.set(...part.scale);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+
+    const edges = new THREE.LineSegments(
+      new THREE.EdgesGeometry(mesh.geometry, 24),
+      new THREE.LineBasicMaterial({ color: "#ffffff", transparent: true, opacity: 0.72 })
+    );
+    mesh.add(edges);
+    group.add(mesh);
+  });
+
+  return group;
+}
+
 function createBox(color: string, metalness: number) {
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), createMaterial(color, metalness));
   mesh.castShadow = true;
@@ -332,4 +377,18 @@ function disposeMaterial(material: THREE.Material | THREE.Material[]) {
   }
 
   material.dispose();
+}
+
+function disposeObject(object: THREE.Object3D) {
+  if (object instanceof THREE.Mesh) {
+    object.geometry.dispose();
+    disposeMaterial(object.material);
+  }
+
+  if (object instanceof THREE.LineSegments) {
+    object.geometry.dispose();
+    disposeMaterial(object.material);
+  }
+
+  object.children.forEach((child) => disposeObject(child));
 }

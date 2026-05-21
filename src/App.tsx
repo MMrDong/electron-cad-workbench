@@ -16,7 +16,7 @@ import type { CadDocumentKind } from "./types";
 export function App() {
   const [activeView, setActiveView] = useState<WorkspaceView>("welcome");
   const telemetry = useTelemetry();
-  const wsState = useCadWebSocket();
+  const { requestBinaryModel, state: wsState } = useCadWebSocket();
   const { toast, setToast } = useToast();
   const {
     activeTab,
@@ -89,6 +89,7 @@ export function App() {
           }}
           onUpdateView={updateActiveView}
           onZoom={updateActiveZoom}
+          onRequestBinaryModel={requestBinaryModel}
           wsState={wsState}
         />
       );

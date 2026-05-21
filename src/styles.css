@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+    font-family: "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+    background: #101418;
+    color: #edf3f8;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body,
+  #app {
+    width: 100%;
+    min-height: 100%;
+    margin: 0;
+  }
+
+  button {
+    font: inherit;
+  }
+}
+
+@layer components {
+  .nav-item {
+    @apply h-11 border border-transparent px-4 text-left text-sm text-slate-400 transition hover:border-slate-700 hover:bg-slate-800 hover:text-slate-100;
+  }
+
+  .nav-item-active {
+    @apply border-slate-700 bg-slate-800 text-slate-100;
+  }
+
+  .panel {
+    @apply border border-slate-700 bg-slate-900/80;
+  }
+
+  .metric-card {
+    @apply border border-slate-700 bg-slate-900 p-4;
+  }
+
+  .task-button {
+    @apply h-10 min-w-20 border border-slate-700 bg-slate-800 px-3 text-sm text-slate-100 transition hover:border-emerald-400 disabled:cursor-wait disabled:text-slate-500;
+  }
+}

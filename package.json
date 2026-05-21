@@ -1,0 +1,32 @@
+{
+  "name": "electron-cad-workbench",
+  "version": "0.1.0",
+  "description": "Electron CAD desktop workbench demo built with TypeScript, Vite, and Tailwind CSS.",
+  "main": "dist-electron/electron/main.js",
+  "scripts": {
+    "dev": "concurrently -k \"vite --host 127.0.0.1\" \"wait-on http://127.0.0.1:5173 && tsc -p tsconfig.electron.json && electron .\"",
+    "build": "tsc -p tsconfig.electron.json && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.electron.json --noEmit"
+  },
+  "keywords": [
+    "electron",
+    "cad",
+    "web3d",
+    "ipc",
+    "desktop"
+  ],
+  "author": "Declan Li",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.14.15",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^8.2.2",
+    "electron": "^31.7.7",
+    "postcss": "^8.4.41",
+    "tailwindcss": "^3.4.10",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.0",
+    "wait-on": "^7.2.0"
+  }
+}
